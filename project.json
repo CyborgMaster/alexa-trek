@@ -1,11 +1,11 @@
 {
-  "profile": "personal"
+  "profile": "personal",
   "name": "AlexaTrek",
   "description": "Toy alexa skill",
   "runtime": "nodejs4.3",
   "memory": 128,
   "timeout": 30,
-  "role": "ARN arn:aws:iam::081245394645:role/lambda_basic_execution",
+  "role": "arn:aws:iam::081245394645:role/lambda_basic_execution",
   "retainedVersions": 2,
   "environment": {},
 

@@ -71,8 +71,8 @@ setColorInSession = (intent, session, callback) ->
   if favoriteColorSlot
     favoriteColor = favoriteColorSlot.value
     sessionAttributes = createFavoriteColorAttributes(favoriteColor)
-    speechOutput = 'I now know your favorite color is #{favoriteColor}. You can
-      ask me your favorite color by saying, what\'s my favorite color?'
+    speechOutput = "I now know your favorite color is #{favoriteColor}. You can
+      ask me your favorite color by saying, what\'s my favorite color?"
     repromptText = 'You can ask me your favorite color by saying, what\'s my
       favorite color?'
   else
@@ -93,7 +93,7 @@ getColorFromSession = (intent, session, callback) ->
   if session.attributes
     favoriteColor = session.attributes.favoriteColor
   if favoriteColor
-    speechOutput = 'Your favorite color is #{favoriteColor}. Goodbye.'
+    speechOutput = "Your favorite color is #{favoriteColor}. Goodbye."
     shouldEndSession = true
   else
     speechOutput = 'I\'m not sure what your favorite color is, you can say, my
@@ -112,16 +112,16 @@ getColorFromSession = (intent, session, callback) ->
 ###
 
 onSessionStarted = (sessionStartedRequest, session) ->
-  console.log 'onSessionStarted requestId=#{sessionStartedRequest.requestId},
-    sessionId=#{session.sessionId}'
+  console.log "onSessionStarted requestId=#{sessionStartedRequest.requestId},
+    sessionId=#{session.sessionId}"
 
 ###
 # Called when the user launches the skill without specifying what they want.
 ###
 
 onLaunch = (launchRequest, session, callback) ->
-  console.log 'onLaunch requestId=#{launchRequest.requestId},
-    sessionId=#{session.sessionId}'
+  console.log "onLaunch requestId=#{launchRequest.requestId},
+    sessionId=#{session.sessionId}"
   # Dispatch to your skill's launch.
   getWelcomeResponse callback
 
@@ -130,8 +130,8 @@ onLaunch = (launchRequest, session, callback) ->
 ###
 
 onIntent = (intentRequest, session, callback) ->
-  console.log 'onIntent requestId=#{intentRequest.requestId},
-    sessionId=#{session.sessionId}'
+  console.log "onIntent requestId=#{intentRequest.requestId},
+    sessionId=#{session.sessionId}"
   intent = intentRequest.intent
   intentName = intentRequest.intent.name
   # Dispatch to your skill's intent handlers
@@ -153,18 +153,18 @@ onIntent = (intentRequest, session, callback) ->
 ###
 
 onSessionEnded = (sessionEndedRequest, session) ->
-  console.log 'onSessionEnded requestId=#{sessionEndedRequest.requestId},
-    sessionId=#{session.sessionId}'
+  console.log "onSessionEnded requestId=#{sessionEndedRequest.requestId},
+    sessionId=#{session.sessionId}"
   # Add cleanup logic here
 
 # --------------- Main handler -----------------------
 # Route the incoming request based on type (LaunchRequest, IntentRequest,
 # etc.) The JSON body of the request is provided in the event parameter.
 
-exports.handler = (event, context, callback) ->
+exports.handle = (event, context, callback) ->
   try
-    console.log
-    'event.session.application.applicationId=#{event.session.application.applicationId}'
+    console.log "event.session.application.applicationId=
+      #{event.session.application.applicationId}"
 
     ###
     # Uncomment this if statement and populate with your skill's application ID

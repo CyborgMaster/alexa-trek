@@ -1,0 +1,17 @@
+{
+  "profile": "personal"
+  "name": "AlexaTrek",
+  "description": "Toy alexa skill",
+  "runtime": "nodejs4.3",
+  "memory": 128,
+  "timeout": 30,
+  "role": "ARN arn:aws:iam::081245394645:role/lambda_basic_execution",
+  "retainedVersions": 2,
+  "environment": {},
+
+  "handler": "lib.handle",
+  "hooks": {
+    "build": "../../node_modules/.bin/webpack --bail --config ../../webpack.config.js",
+    "clean": "rm -fr lib node_modules"
+  }
+}

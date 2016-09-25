@@ -1,0 +1,15 @@
+{
+  "name": "nova-lambda",
+  "description": "Helper Functions for AllyNova",
+  "version": "1.0.0",
+  "dependencies": {
+    "bluebird": "*"
+  },
+  "devDependencies": {
+    "coffee-loader": "*",
+    "coffee-script": "*",
+    "webpack": "*",
+    "webpack-merge": "*",
+    "webpack-shell-plugin": "*"
+  }
+}

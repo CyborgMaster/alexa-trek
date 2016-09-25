@@ -9,109 +9,82 @@
 
 # -------------- Helpers that build all of the responses -----------------------
 
-buildSpeechletResponse = (title, output, repromptText, shouldEndSession) ->
-  outputSpeech:
-    type: 'PlainText'
-    text: output
-  card:
-    type: 'Simple'
-    title: "SessionSpeechlet - #{title}"
-    content: "SessionSpeechlet - #{output}"
-  reprompt: outputSpeech:
-    type: 'PlainText'
-    text: repromptText
-  shouldEndSession: shouldEndSession
+buildResponse = (title, output, { reprompt, session, endSession }) ->
+  endSession ?= false
 
-buildResponse = (sessionAttributes, speechletResponse) ->
   version: '1.0'
-  sessionAttributes: sessionAttributes
-  response: speechletResponse
+  sessionAttributes: session
+  response:
+    outputSpeech:
+      type: 'PlainText'
+      text: output
+    card:
+      type: 'Simple'
+      title: title
+      content: output
+    reprompt: outputSpeech:
+      type: 'PlainText'
+      text: reprompt
+    shouldEndSession: endSession
 
 # ---------- Functions that control the skill's behavior -----------------------
 
-getWelcomeResponse = (callback) ->
-  # If we wanted to initialize the session to have some attributes we could add
-  # those here.
-  sessionAttributes = {}
-  cardTitle = 'Welcome'
-  speechOutput = 'Welcome to the Alexa Skills Kit sample. Please tell me your
-    favorite color by saying, my favorite color is red'
-  # If the user either does not reply to the welcome message or says something
-  # that is not understood, they will be prompted again with this text.
-  repromptText = 'Please tell me your favorite color by saying my favorite color
-    is red'
-  shouldEndSession = false
-  callback(sessionAttributes,
-    buildSpeechletResponse(cardTitle, speechOutput,
-      repromptText, shouldEndSession))
+getWelcomeResponse = (intent, session) ->
+  buildResponse(
+    'Welcome'
+    'Welcome to the Alexa Skills Kit sample. Please tell me your favorite color
+      by saying, my favorite color is red'
+    reprompt: 'Please tell me your favorite color by saying my favorite color is
+      red')
 
-handleSessionEndRequest = (callback) ->
-  cardTitle = 'Session Ended'
-  speechOutput = 'Thank you for trying the Alexa Skills Kit sample. Have a nice
-    day!'
-  # Setting this to true ends the session and exits the skill.
-  shouldEndSession = true
-  callback {}, buildSpeechletResponse(cardTitle,
-    speechOutput, null, shouldEndSession)
-
-createFavoriteColorAttributes = (favoriteColor) ->
-  favoriteColor: favoriteColor
+handleSessionEndRequest = (intent, session) ->
+  buildResponse(
+    'Session Ended'
+    'Thank you for trying the Alexa Skills Kit sample. Have a nice day!'
+    endSession: true)
 
 ###
 # Sets the color in the session and prepares the speech to reply to the user.
 ###
 
-setColorInSession = (intent, session, callback) ->
-  cardTitle = intent.name
+setColorInSession = (intent, session) ->
   favoriteColorSlot = intent.slots.Color
-  repromptText = ''
-  sessionAttributes = {}
-  shouldEndSession = false
-  speechOutput = ''
   if favoriteColorSlot
     favoriteColor = favoriteColorSlot.value
-    sessionAttributes = createFavoriteColorAttributes(favoriteColor)
-    speechOutput = "I now know your favorite color is #{favoriteColor}. You can
+    session = favoriteColor: favoriteColor
+    speech = "I now know your favorite color is #{favoriteColor}. You can
       ask me your favorite color by saying, what\'s my favorite color?"
-    repromptText = 'You can ask me your favorite color by saying, what\'s my
+    reprompt = 'You can ask me your favorite color by saying, what\'s my
       favorite color?'
   else
-    speechOutput = 'I\'m not sure what your favorite color is. Please try
-      again.'
-    repromptText = 'I\'m not sure what your favorite color is. You can tell me
-      your favorite color by saying, my favorite color is red'
-  callback sessionAttributes,
-    buildSpeechletResponse(cardTitle, speechOutput, repromptText,
-      shouldEndSession)
+    speech = 'I\'m not sure what your favorite color is. Please try again.'
+    reprompt = 'I\'m not sure what your favorite color is. You can tell me your
+      favorite color by saying, my favorite color is red'
+  buildResponse intent.name, speech, reprompt: reprompt, session: session
 
-getColorFromSession = (intent, session, callback) ->
-  favoriteColor = undefined
-  repromptText = null
-  sessionAttributes = {}
-  shouldEndSession = false
-  speechOutput = ''
-  if session.attributes
-    favoriteColor = session.attributes.favoriteColor
+getColorFromSession = (intent, session) ->
+  endSession = false
+  favoriteColor = session.attributes.favoriteColoir if session.attributes
   if favoriteColor
-    speechOutput = "Your favorite color is #{favoriteColor}. Goodbye."
-    shouldEndSession = true
+    speech = "Your favorite color is #{favoriteColor}. Goodbye."
+    endSession = true
   else
-    speechOutput = 'I\'m not sure what your favorite color is, you can say, my
+    speech = 'I\'m not sure what your favorite color is, you can say, my
       favorite color is red'
   # Setting repromptText to null signifies that we do not want to reprompt the
   # user.  If the user does not respond or says something that is not
   # understood, the session will end.
-  callback sessionAttributes,
-    buildSpeechletResponse(intent.name, speechOutput, repromptText,
-      shouldEndSession)
+  buildResponse intent.name, speech,
+    endSession: endSession,
 
 # --------------- Events -----------------------
 
 ###
 # Called when the session starts.
 ###
+eventHandlers = {}
 
-onSessionStarted = (sessionStartedRequest, session) ->
+eventHandlers.onSessionStarted = (sessionStartedRequest, session) ->
   console.log "onSessionStarted requestId=#{sessionStartedRequest.requestId},
     sessionId=#{session.sessionId}"
 
@@ -119,40 +92,37 @@ onSessionStarted = (sessionStartedRequest, session) ->
 # Called when the user launches the skill without specifying what they want.
 ###
 
-onLaunch = (launchRequest, session, callback) ->
+eventHandlers.onLaunch = (launchRequest, session) ->
   console.log "onLaunch requestId=#{launchRequest.requestId},
     sessionId=#{session.sessionId}"
   # Dispatch to your skill's launch.
-  getWelcomeResponse callback
+  getWelcomeResponse()
 
 ###
 # Called when the user specifies an intent for this skill.
 ###
 
-onIntent = (intentRequest, session, callback) ->
+intentHandlers =
+  MyColorIsIntent: setColorInSession
+  WhatsMyColorIntent: getColorFromSession
+  'AMAZON.HelpIntent': getWelcomeResponse
+  'AMAZON.StopIntent': handleSessionEndRequest
+  'AMAZON.CancelIntent': handleSessionEndRequest
+
+eventHandlers.onIntent = (intentRequest, session) ->
   console.log "onIntent requestId=#{intentRequest.requestId},
     sessionId=#{session.sessionId}"
   intent = intentRequest.intent
-  intentName = intentRequest.intent.name
-  # Dispatch to your skill's intent handlers
-  if intentName == 'MyColorIsIntent'
-    setColorInSession intent, session, callback
-  else if intentName == 'WhatsMyColorIntent'
-    getColorFromSession intent, session, callback
-  else if intentName == 'AMAZON.HelpIntent'
-    getWelcomeResponse callback
-  else if intentName == 'AMAZON.StopIntent' ||
-     intentName == 'AMAZON.CancelIntent'
-    handleSessionEndRequest callback
-  else
-    throw new Error('Invalid intent')
+  handler = intentHandlers[intent.name]
+  throw new throw new Error('Invalid intent') unless handler?
+  handler intent, session
 
 ###
 # Called when the user ends the session.
 # Is not called when the skill returns shouldEndSession=true.
 ###
 
-onSessionEnded = (sessionEndedRequest, session) ->
+eventHandlers.onSessionEnded = (sessionEndedRequest, session) ->
   console.log "onSessionEnded requestId=#{sessionEndedRequest.requestId},
     sessionId=#{session.sessionId}"
   # Add cleanup logic here
@@ -180,18 +150,11 @@ exports.handle = (event, context, callback) ->
     ###
 
     if event.session.new
-      onSessionStarted { requestId: event.request.requestId }, event.session
-    if event.request.type == 'LaunchRequest'
-      onLaunch event.request, event.session,
-        (sessionAttributes, speechletResponse) ->
-          callback null, buildResponse(sessionAttributes, speechletResponse)
-    else if event.request.type == 'IntentRequest'
-      onIntent event.request, event.session,
-        (sessionAttributes, speechletResponse) ->
-          callback null, buildResponse(sessionAttributes, speechletResponse)
-    else if event.request.type == 'SessionEndedRequest'
-      onSessionEnded event.request, event.session
-      callback()
+      eventHandlers.onSessionStarted event.request, event.session
+    console.log event.request.type
+    handler = "on#{event.request.type.replace 'Request', ''}"
+    console.log handler
+    console.log eventHandlers[handler]
+    callback null, eventHandlers[handler] event.request, event.session
   catch err
     callback err
-  return

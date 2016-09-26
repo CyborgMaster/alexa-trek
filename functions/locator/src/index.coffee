@@ -64,7 +64,7 @@ setColorInSession = (intent, session) ->
 
 getColorFromSession = (intent, session) ->
   endSession = false
-  favoriteColor = session.attributes.favoriteColoir if session.attributes
+  favoriteColor = session.attributes.favoriteColor if session.attributes
   if favoriteColor
     speech = "Your favorite color is #{favoriteColor}. Goodbye."
     endSession = true

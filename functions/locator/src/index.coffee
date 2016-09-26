@@ -29,53 +29,30 @@ buildResponse = (title, output, { reprompt, session, endSession }) ->
 
 # ---------- Functions that control the skill's behavior -----------------------
 
-getWelcomeResponse = (intent, session) ->
+welcome = (intent, session) ->
   buildResponse(
     'Welcome'
-    'Welcome to the Alexa Skills Kit sample. Please tell me your favorite color
-      by saying, my favorite color is red'
-    reprompt: 'Please tell me your favorite color by saying my favorite color is
-      red')
+    'What is your inquiry?'
+    reprompt: 'Please state your inquiry')
 
-handleSessionEndRequest = (intent, session) ->
+sessionEnd = (intent, session) ->
   buildResponse(
-    'Session Ended'
-    'Thank you for trying the Alexa Skills Kit sample. Have a nice day!'
+    'Goodbye'
+    'Goodbye'
     endSession: true)
 
-###
-# Sets the color in the session and prepares the speech to reply to the user.
-###
+locations =
+  captain: 'on the bridge. I mean in his office.'
+  commander: 'in the mess hall'
+  ensign: 'napping in his quarters, on deck 2'
 
-setColorInSession = (intent, session) ->
-  favoriteColorSlot = intent.slots.Color
-  if favoriteColorSlot
-    favoriteColor = favoriteColorSlot.value
-    session = favoriteColor: favoriteColor
-    speech = "I now know your favorite color is #{favoriteColor}. You can
-      ask me your favorite color by saying, what\'s my favorite color?"
-    reprompt = 'You can ask me your favorite color by saying, what\'s my
-      favorite color?'
+locate = (intent, session) ->
+  rank = intent.slots.Rank.value
+  if rank?
+    speech = "#{rank} Mickelson is #{locations[rank]}"
+    buildResponse intent.name, speech, endSession: true
   else
-    speech = 'I\'m not sure what your favorite color is. Please try again.'
-    reprompt = 'I\'m not sure what your favorite color is. You can tell me your
-      favorite color by saying, my favorite color is red'
-  buildResponse intent.name, speech, reprompt: reprompt, session: session
-
-getColorFromSession = (intent, session) ->
-  endSession = false
-  favoriteColor = session.attributes.favoriteColor if session.attributes
-  if favoriteColor
-    speech = "Your favorite color is #{favoriteColor}. Goodbye."
-    endSession = true
-  else
-    speech = 'I\'m not sure what your favorite color is, you can say, my
-      favorite color is red'
-  # Setting repromptText to null signifies that we do not want to reprompt the
-  # user.  If the user does not respond or says something that is not
-  # understood, the session will end.
-  buildResponse intent.name, speech,
-    endSession: endSession,
+    welcome()
 
 # --------------- Events -----------------------
 
@@ -96,18 +73,17 @@ eventHandlers.onLaunch = (launchRequest, session) ->
   console.log "onLaunch requestId=#{launchRequest.requestId},
     sessionId=#{session.sessionId}"
   # Dispatch to your skill's launch.
-  getWelcomeResponse()
+  welcome()
 
 ###
 # Called when the user specifies an intent for this skill.
 ###
 
 intentHandlers =
-  MyColorIsIntent: setColorInSession
-  WhatsMyColorIntent: getColorFromSession
-  'AMAZON.HelpIntent': getWelcomeResponse
-  'AMAZON.StopIntent': handleSessionEndRequest
-  'AMAZON.CancelIntent': handleSessionEndRequest
+  LocateIntent: locate
+  'AMAZON.HelpIntent': welcome
+  'AMAZON.StopIntent': sessionEnd
+  'AMAZON.CancelIntent': sessionEnd
 
 eventHandlers.onIntent = (intentRequest, session) ->
   console.log "onIntent requestId=#{intentRequest.requestId},
@@ -151,10 +127,7 @@ exports.handle = (event, context, callback) ->
 
     if event.session.new
       eventHandlers.onSessionStarted event.request, event.session
-    console.log event.request.type
     handler = "on#{event.request.type.replace 'Request', ''}"
-    console.log handler
-    console.log eventHandlers[handler]
     callback null, eventHandlers[handler] event.request, event.session
   catch err
     callback err
